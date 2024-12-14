@@ -1,0 +1,57 @@
+# metadata
+file: train_metrics.py
+dataset: ns2d
+
+# global settings
+use_writer: True
+res: 128
+modes: 20
+width: 32
+out_layer_dim: 32
+lr: 0.001
+lr_method: cycle
+step_size: 100
+step_gamma: 0.5
+epochs: 1000
+warmup_epochs: 200
+noise_scale: 0.0
+T_ar: 1
+use_ln: 0
+normalize: 0
+T_bundle: 1
+grad_clip: 10000.0
+
+# data paths
+train_paths: [
+  'ns2d_pda',
+]
+test_paths: [
+  'ns2d_pda'
+]
+ntrain_list: [6500]
+
+# task settings
+model: DPOT
+num_gpus: 4
+opt: adam
+data_weights: [1]
+comment: 'Ti'
+tasks:
+  normalize: [0, 0, 0, 0, 0]
+  res: [16, 32, 64, 128, 256]
+  patch_size: [8, 8, 8, 8, 8]
+  noise_scale: [0.0005, 0.0005, 0.0005, 0.0005, 0.0005]
+  modes: [32, 32, 32, 32, 32]
+  width: [512, 512, 512, 512, 512]
+  mlp_ratio: [1, 1, 1, 1, 1]
+  n_blocks: [4, 4, 4, 4, 4]
+  n_layers: [4, 4, 4, 4, 4]
+  lr: [0.001, 0.001, 0.001, 0.001, 0.001]
+  epochs: [10, 10, 10, 10, 10]
+  lr_method: [cycle, cycle, cycle, cycle, cycle]
+  warmup_epochs: [1, 1, 1, 1, 1]
+  T_ar: [1, 1, 1, 1, 1]
+  T_bundle: [1, 1, 1, 1, 1]
+  beta1: [0.9, 0.9, 0.9, 0.9, 0.9]
+  beta2: [0.9, 0.9, 0.9, 0.9, 0.9]
+  batch_size: [128, 128, 128, 128, 128]

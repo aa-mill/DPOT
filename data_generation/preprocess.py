@@ -13,7 +13,7 @@ import os
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from pathlib import Path
-from data_generation.cfdbench import get_auto_dataset
+# from data_generation.cfdbench import get_auto_dataset
 
 
 
@@ -521,20 +521,20 @@ if __name__ == '__main__':
     #### FNO datasets
     # preprocess_mat()
 
-    #### PDEBench datasets
-    process_pdebench_data(path='./../data/164687',save_name='./../data/pdebench/ns2d_pdb_M1e-1_eta1e-2_zeta1e-2',n_train=9000, n_test=1000)
-    process_pdebench_data(path='./../data/164688',save_name='./../data/pdebench/ns2d_pdb_M1e-1_eta1e-1_zeta1e-1',n_train=9000, n_test=1000)
-    process_pdebench_data(path='./../data/164690',save_name='./../data/pdebench/ns2d_pdb_M1_eta1e-2_zeta1e-2',n_train=9000, n_test=1000)
-    process_pdebench_data(path='./../data/164691',save_name='./../data//pdebench/ns2d_pdb_M1_eta1e-1_zeta1e-1',n_train=9000, n_test=1000)
-    process_pdebench_data(path='./../data/164685',save_name='./../data/pdebench/ns2d_pdb_M1e-1_eta1e-8_zeta1e-8_turb_512',n_train=900, n_test=100)
-    process_pdebench_data(path='./../data/164686',save_name='./../data/pdebench/ns2d_pdb_M1_eta1e-8_zeta1e-8_turb_512',n_train=900, n_test=100)
-    process_pdebench_data(path='./../data/164689',save_name='./../data/pdebench/ns2d_pdb_M1e-1_eta1e-8_zeta1e-8_rand_512',n_train=900, n_test=100)
-    process_pdebench_data(path='./../data/164692',save_name='./../data/pdebench/ns2d_pdb_M1_eta1e-8_zeta1e-8_rand_512',n_train=900, n_test=100)
-    process_swe_pdebench(path='./../data/133021',save_name='./../data/pdebench/swe_pdb',n_train=900, n_test=100)
-    process_dr_pdebench(path='./../data/133017',save_name='./../data/pdebench/dr_pdb',n_train=900, n_test=100)
-    process_pdebench3d_data(path='./../data/164693',save_name='./../data/pdebench/ns3d_pdb_M1_rand',n_train=90, n_test=10)
-    process_pdebench3d_data(path='./../data/173286',save_name='./../data/pdebench/ns3d_pdb_M1e-1_rand',n_train=90, n_test=10)
-    process_pdebench3d_data(path='./../data/164694',save_name='./../data/pdebench/ns3d_pdb_M1_turb',n_train=540, n_test=60)
+    # #### PDEBench datasets
+    # process_pdebench_data(path='./../data/164687',save_name='./../data/pdebench/ns2d_pdb_M1e-1_eta1e-2_zeta1e-2',n_train=9000, n_test=1000)
+    # process_pdebench_data(path='./../data/164688',save_name='./../data/pdebench/ns2d_pdb_M1e-1_eta1e-1_zeta1e-1',n_train=9000, n_test=1000)
+    # process_pdebench_data(path='./../data/164690',save_name='./../data/pdebench/ns2d_pdb_M1_eta1e-2_zeta1e-2',n_train=9000, n_test=1000)
+    # process_pdebench_data(path='./../data/164691',save_name='./../data//pdebench/ns2d_pdb_M1_eta1e-1_zeta1e-1',n_train=9000, n_test=1000)
+    # process_pdebench_data(path='./../data/164685',save_name='./../data/pdebench/ns2d_pdb_M1e-1_eta1e-8_zeta1e-8_turb_512',n_train=900, n_test=100)
+    # process_pdebench_data(path='./../data/164686',save_name='./../data/pdebench/ns2d_pdb_M1_eta1e-8_zeta1e-8_turb_512',n_train=900, n_test=100)
+    # process_pdebench_data(path='./../data/164689',save_name='./../data/pdebench/ns2d_pdb_M1e-1_eta1e-8_zeta1e-8_rand_512',n_train=900, n_test=100)
+    # process_pdebench_data(path='./../data/164692',save_name='./../data/pdebench/ns2d_pdb_M1_eta1e-8_zeta1e-8_rand_512',n_train=900, n_test=100)
+    # process_swe_pdebench(path='./../data/133021',save_name='./../data/pdebench/swe_pdb',n_train=900, n_test=100)
+    # process_dr_pdebench(path='./../data/133017',save_name='./../data/pdebench/dr_pdb',n_train=900, n_test=100)
+    # process_pdebench3d_data(path='./../data/164693',save_name='./../data/pdebench/ns3d_pdb_M1_rand',n_train=90, n_test=10)
+    # process_pdebench3d_data(path='./../data/173286',save_name='./../data/pdebench/ns3d_pdb_M1e-1_rand',n_train=90, n_test=10)
+    # process_pdebench3d_data(path='./../data/164694',save_name='./../data/pdebench/ns3d_pdb_M1_turb',n_train=540, n_test=60)
 
     #### PDEArena datasets
     preprocess_ns2d()
@@ -543,4 +543,4 @@ if __name__ == '__main__':
 
 
     #### CFDBench datasets
-    preprocess_cfdbench_data()
+    # preprocess_cfdbench_data()

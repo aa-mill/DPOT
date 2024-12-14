@@ -5,6 +5,7 @@ import random
 import argparse
 import os
 import sys
+from datetime import datetime
 
 
 class ParallelTrainer:
@@ -15,6 +16,7 @@ class ParallelTrainer:
     @staticmethod
     def load_yaml(yaml_path):
         with open(yaml_path, 'r') as file:
+            #  dict
             return yaml.safe_load(file)
 
     def get_available_gpus(self):
@@ -62,8 +64,17 @@ class ParallelTrainer:
         log_path = f"{self.config['model']}_{self.config['dataset']}_{time.strftime('%m%d_%H_%M_%S')}"
         base_args.extend(['--log_path', log_path])
         num_gpus = task_args.get('num_gpus', self.config.get('num_gpus', 1))
-        # print(f"Starting task with args: {' '.join(base_args)}")
-        cmd = f"CUDA_VISIBLE_DEVICES={','.join(map(str, gpu))} accelerate launch --num_processes={num_gpus} --multi_gpu --main_process_port 50{random.randint(10, 99)} {' '.join(base_args)}:"
+        
+        # construct the accelerate launch command with fsdp flags
+        cmd = (
+            f"CUDA_VISIBLE_DEVICES={','.join(map(str, gpu))} "
+            f"accelerate launch "
+            f"--config_file accelerate_config.yaml "
+            f"--num_processes={num_gpus} "
+            f"--multi_gpu "
+            f"--main_process_port 50{random.randint(10, 99)} "
+            f"{' '.join(base_args)}"
+        )
 
         process = subprocess.Popen(cmd,shell=True)
         print(f"Task started on GPU {gpu}")
@@ -150,9 +161,11 @@ class ParallelTrainer:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Parallel Training or pretraining Neural Operators')
-    parser.add_argument('--config_file',type=str,default='pretrain_tiny.yaml')
+    # parse single argument, the config file
+    parser = argparse.ArgumentParser(description='Parallel DPOT training')
+    parser.add_argument('--config_file', type=str, default='pretrain_tiny.yaml')
     args = parser.parse_args()
 
-    trainer = ParallelTrainer(os.path.join('configs',args.config_file))
+    # init trainer
+    trainer = ParallelTrainer(os.path.join('configs', args.config_file))
     trainer.start()
