@@ -68,6 +68,7 @@ class AFNO2D(nn.Module):
 
         # total_modes = H*W // 2 + 1
         kept_modes = self.modes
+        # kept_modes = min(self.modes, min(H, W))
 
         o1_real[:, :kept_modes, :kept_modes] = self.act(
             torch.einsum('...bi,bio->...bo', x[:, :kept_modes, :kept_modes].real, self.w1[0]) - \
@@ -187,11 +188,12 @@ class PatchEmbed(nn.Module):
         # patch_size = to_2tuple(patch_size)
         img_size = (img_size, img_size)
         patch_size = (patch_size, patch_size)
-        num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0])
+        # num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0])
         self.img_size = img_size
         self.patch_size = patch_size
-        self.num_patches = num_patches
+        # self.num_patches = num_patches
         self.out_size = (img_size[0] // patch_size[0], img_size[1] // patch_size[1])
+        # self.out_size = (H_out, W_out)
         self.out_dim = out_dim
         self.act = ACTIVATION[act]
 
@@ -202,8 +204,7 @@ class PatchEmbed(nn.Module):
         )
 
     def forward(self, x):
-        B, C, H, W = x.shape
-        assert H == self.img_size[0] and W == self.img_size[1], f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
+        # assert H == self.img_size[0] and W == self.img_size[1], f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
         # x = self.proj(x).flatten(2).transpose(1, 2)
         x = self.proj(x)
         return x
@@ -276,8 +277,9 @@ class DPOTNet(nn.Module):
         self.mlp_ratio = mlp_ratio
         self.act = ACTIVATION[act]
         self.patch_embed = PatchEmbed(img_size=img_size, patch_size=patch_size, in_chans=in_channels + 3, embed_dim=out_channels * patch_size + 3, out_dim=embed_dim,act=act)
-        self.latent_size = self.patch_embed.out_size
-        self.pos_embed = nn.Parameter(torch.zeros(1, embed_dim, self.patch_embed.out_size[0], self.patch_embed.out_size[1]))
+        self.embed_base_size = 2
+        # self.latent_size = self.patch_embed.out_size
+        self.pos_embed = nn.Parameter(torch.zeros(1, embed_dim, self.embed_base_size, self.embed_base_size))
         self.normalize = normalize
         self.time_agg = time_agg
         self.n_cls = n_cls
@@ -374,8 +376,9 @@ class DPOTNet(nn.Module):
         x = torch.cat((x, grid), dim=-1).contiguous() # B, X, Y, T, C+3
         x = rearrange(x, 'b x y t c -> (b t) c x y')
         x = self.patch_embed(x)
-
-        x = x + self.pos_embed
+        B_t, C_e, H_out, W_out = x.shape  # after patch_embed
+        pos_embed_resized = F.interpolate(self.pos_embed, size=(H_out, W_out), mode='bilinear', align_corners=False)
+        x = x + pos_embed_resized
 
         x = rearrange(x, '(b t) c x y -> b x y t c', b=B, t=T)
 

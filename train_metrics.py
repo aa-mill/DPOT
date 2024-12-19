@@ -23,6 +23,7 @@ from models.dpot_res import CDPOTNet
 import pynvml
 from torch.cuda import max_memory_allocated, max_memory_reserved
 from torch.cuda import reset_peak_memory_stats
+from itertools import cycle
 
 def get_args():
     parser = argparse.ArgumentParser(description='Training or pretraining for the same data type')
@@ -163,18 +164,30 @@ if __name__ == "__main__":
     args.data_weights = [1]*len(args.train_paths) if len(args.data_weights) == 1 else args.data_weights
 
     # get datasets and dataloaders
-    train_dataset = MixedTemporalDataset(args.train_paths, args.ntrain_list, res=args.res, t_in=args.T_in, t_ar=args.T_ar, normalize=False, train=True, data_weights=args.data_weights)
-    test_datasets = [MixedTemporalDataset(test_path, res=args.res, n_channels=train_dataset.n_channels, t_in=args.T_in, t_ar=-1, normalize=False, train=False) for test_path in test_paths]
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=12)
+    train_dataset1 = MixedTemporalDataset([args.train_paths[0]], [args.ntrain_list[0]], res=args.res, 
+                                         t_in=args.T_in, t_ar=args.T_ar, normalize=False, 
+                                         train=True, data_weights=[args.data_weights[0]])
+
+    train_dataset2 = MixedTemporalDataset([args.train_paths[1]], [args.ntrain_list[1]], res=args.res, 
+                                         t_in=args.T_in, t_ar=args.T_ar, normalize=False, 
+                                         train=True, data_weights=[args.data_weights[1]])
+
+    test_datasets = [MixedTemporalDataset(test_path, res=args.res, n_channels=train_dataset1.n_channels, t_in=args.T_in, t_ar=-1, normalize=False, train=False) for test_path in test_paths]
+    train_loader1 = torch.utils.data.DataLoader(train_dataset1, batch_size=args.batch_size, 
+                                              shuffle=True, num_workers=12, persistent_workers=True)
+    train_loader2 = torch.utils.data.DataLoader(train_dataset2, batch_size=args.batch_size, 
+                                              shuffle=True, num_workers=12, persistent_workers=True)
     test_loaders = [torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, drop_last=False, shuffle=False, num_workers=12) for test_dataset in test_datasets]
-    ntrain, ntests = len(train_dataset), [len(test_dataset) for test_dataset in test_datasets]
-    print('Train num {} test num {}'.format(train_dataset.n_sizes, ntests))
+    ntrain, ntests = len(train_dataset1), [len(test_dataset) for test_dataset in test_datasets]
+    print('Train num {} test num {}'.format(train_dataset1.n_sizes, ntests))
     
     # get model, optimizer, and scheduler
-    model = DPOTNet(img_size=args.res, patch_size=args.patch_size, in_channels=train_dataset.n_channels, in_timesteps = args.T_in, out_timesteps = args.T_bundle, out_channels=train_dataset.n_channels, normalize=args.normalize, embed_dim=args.width, depth=args.n_layers, n_blocks = args.n_blocks, mlp_ratio=args.mlp_ratio, out_layer_dim=args.out_layer_dim, act=args.act, n_cls=len(args.train_paths)).to(device)
+    model = DPOTNet(img_size=args.res, patch_size=args.patch_size, in_channels=train_dataset1.n_channels, in_timesteps = args.T_in, out_timesteps = args.T_bundle, out_channels=train_dataset1.n_channels, normalize=args.normalize, embed_dim=args.width, depth=args.n_layers, n_blocks = args.n_blocks, mlp_ratio=args.mlp_ratio, out_layer_dim=args.out_layer_dim, act=args.act, n_cls=len(args.train_paths)).to(device)
+    model = accelerator.prepare(model)
     optimizer = Adam(model.parameters(), lr=args.lr, betas=(args.beta1, args.beta2), weight_decay=1e-6)
-    scheduler = OneCycleLR(optimizer, max_lr=args.lr, div_factor=1e4, pct_start=(args.warmup_epochs / args.epochs), final_div_factor=1e4, steps_per_epoch=len(train_loader), epochs=args.epochs)
-
+    scheduler = OneCycleLR(optimizer, max_lr=args.lr, div_factor=1e4, pct_start=(args.warmup_epochs / args.epochs), final_div_factor=1e4, steps_per_epoch=len(train_loader1), epochs=args.epochs)
+    model, optimizer, scheduler = accelerator.prepare(model, optimizer, scheduler)
+    
     # set up logging
     comment = args.comment + '_{}_{}'.format(len(train_paths), ntrain)
     log_path = './logs_pretrain/' + time.strftime('%m%d_%H_%M_%S') + comment if len(args.log_path)==0  else os.path.join('./logs_pretrain',args.log_path + comment)
@@ -191,7 +204,9 @@ if __name__ == "__main__":
     count_parameters(model)
 
     # prepare training
-    model, optimizer, scheduler, train_loader, *test_loaders = accelerator.prepare(model, optimizer, scheduler, train_loader, *test_loaders)
+    train_loader1, train_loader2, *test_loaders = accelerator.prepare(
+        train_loader1, train_loader2, *test_loaders
+    )
 
     # Initialize tracker after setting up writer
     tracker = ComputeMetricsTracker(accelerator, writer=writer if args.use_writer else None)
@@ -199,7 +214,7 @@ if __name__ == "__main__":
     # training loop
     myloss = SimpleLpLoss(size_average=False)
     clsloss = torch.nn.CrossEntropyLoss(reduction='sum')
-    iter = 0
+    # iter = 0
     for ep in range(args.epochs):
         model.train()
         
@@ -216,7 +231,16 @@ if __name__ == "__main__":
 
         torch.cuda.empty_cache()
 
-        for xx, yy, msk, cls in train_loader:
+        # use zip to iterate over both dataloaders simultaneously
+        n_iters = min(len(train_loader1), len(train_loader2))
+        total_batches = np.arange(len(train_loader1) + len(train_loader2))
+        for _, batch1, batch2 in zip(total_batches, cycle(train_loader1), cycle(train_loader2)):
+            # randomly choose which batch to use
+            if torch.rand(1).item() < 0.5:
+                xx, yy, msk, cls = batch1
+            else:
+                xx, yy, msk, cls = batch2
+                
             batch_start = time.time()
             t_load += default_timer() - t_1
             t_1 = default_timer()

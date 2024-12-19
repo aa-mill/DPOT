@@ -13,7 +13,7 @@ import os
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from pathlib import Path
-# from data_generation.cfdbench import get_auto_dataset
+from cfdbench import get_auto_dataset
 
 
 
@@ -428,28 +428,28 @@ def preprocess_cfdbench_data():
     delta_tube = 0.1
     delta_dam = 0.1
     train_data_cavity, dev_data_cavity, test_data_cavity = get_auto_dataset(
-        data_dir=Path('../../data/large/cfdbench'),
+        data_dir=Path('../data/large/cfdbench'),
         data_name='cavity_prop_bc_geo',
         delta_time=0.1,
         norm_props=True,
         norm_bc=True,
     )
-    train_data_cylinder, dev_data_cylinder, test_data_cylinder = get_auto_dataset(
-        data_dir=Path('../../data/large/cfdbench'),
-        data_name='cylinder_prop_bc_geo',
-        delta_time=0.1,
-        norm_props=True,
-        norm_bc=True,
-    )
-    # train_data_dam, dev_data_dam, test_data_dam = get_auto_dataset(
-    #     data_dir=Path('../../data/large/cfdbench'),
-    #     data_name='dam_prop',
+    # train_data_cylinder, dev_data_cylinder, test_data_cylinder = get_auto_dataset(
+    #     data_dir=Path('../data/large/cfdbench'),
+    #     data_name='cylinder_prop_bc_geo',
     #     delta_time=0.1,
     #     norm_props=True,
     #     norm_bc=True,
     # )
+    train_data_dam, dev_data_dam, test_data_dam = get_auto_dataset(
+        data_dir=Path('../data/large/cfdbench'),
+        data_name='dam_prop',
+        delta_time=0.1,
+        norm_props=True,
+        norm_bc=True,
+    )
     train_data_tube, dev_data_tube, test_data_tube = get_auto_dataset(
-        data_dir=Path('../../data/large/cfdbench'),
+        data_dir=Path('../data/large/cfdbench'),
         data_name='tube_prop_bc_geo',
         delta_time=0.1,
         norm_props=True,
@@ -457,19 +457,19 @@ def preprocess_cfdbench_data():
     )
 
     cavity_lens = [data.shape[0] for data in train_data_cavity.all_features]
-    cylinder_lens = [data.shape[0] for data in train_data_cylinder.all_features]
+    # cylinder_lens = [data.shape[0] for data in train_data_cylinder.all_features]
     tube_lens = [data.shape[0] for data in train_data_tube.all_features]
-    # dam_lens = [data.shape[0] for data in train_data_dam.all_features]
+    dam_lens = [data.shape[0] for data in train_data_dam.all_features]
 
-    train_cavity_feats, train_cylinder_feats, train_tube_feats = train_data_cavity.all_features, train_data_cylinder.all_features, train_data_tube.all_features
-    test_cavity_feats, test_cylinder_feats, test_tube_feats = test_data_cavity.all_features, test_data_cylinder.all_features, test_data_tube.all_features
+    train_cavity_feats, train_tube_feats, train_dam_feats = train_data_cavity.all_features, train_data_tube.all_features, train_data_dam.all_features
+    test_cavity_feats, test_tube_feats, test_dam_feats = test_data_cavity.all_features, test_data_tube.all_features, test_data_dam.all_features
 
-    train_feats = train_cavity_feats + train_cylinder_feats + train_tube_feats
-    test_feats = test_cavity_feats + test_cylinder_feats + test_tube_feats
+    train_feats = train_cavity_feats + train_tube_feats + train_dam_feats
+    test_feats = test_cavity_feats + test_tube_feats + test_dam_feats
 
 
     print(cavity_lens)
-    print(cylinder_lens)
+    # print(cylinder_lens)
     print(tube_lens)
     # print(dam_lens)
 
@@ -506,6 +506,9 @@ def preprocess_cfdbench_data():
     train_data, test_data = train_data.transpose(0,3,4,1,2), test_data.transpose(0, 3, 4, 1, 2) # B, X, Y, T, C
     print(train_data.shape, test_data.shape)
 
+    # Create directory if it doesn't exist
+    os.makedirs('../data/cfdbench', exist_ok=True)
+    
     with h5py.File('./../data/cfdbench/ns2d_cdb_train.hdf5','w') as fp:
         fp.create_dataset('data',data=train_data,compression=None)
 
@@ -543,4 +546,4 @@ if __name__ == '__main__':
 
 
     #### CFDBench datasets
-    # preprocess_cfdbench_data()
+    preprocess_cfdbench_data()

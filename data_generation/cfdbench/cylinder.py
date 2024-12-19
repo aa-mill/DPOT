@@ -8,8 +8,8 @@ from torch import Tensor
 from tqdm import tqdm
 import numpy as np
 
-from data_generation.cfdbench.base import CfdDataset, CfdAutoDataset
-from data_generation.cfdbench.utils import load_json, normalize_bc, normalize_physics_props
+from .base import CfdDataset, CfdAutoDataset
+from .utils import load_json, normalize_bc, normalize_physics_props
 
 
 def load_case_data(case_dir: Path) -> Tuple[np.ndarray, Dict[str, float]]:
@@ -438,7 +438,7 @@ def get_cylinder_auto_datasets(
 
 
 if __name__ == "__main__":
-    data_dir = Path("../../data/large/cfdbench/cylinder")
+    data_dir = Path("../data/large/cfdbench/cylinder")
     time_step_size = 10
     dataset = CylinderFlowDataset([data_dir], norm_props=True, norm_bc=True)
     exit()

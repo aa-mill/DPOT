@@ -71,7 +71,6 @@ class ParallelTrainer:
             f"accelerate launch "
             f"--config_file accelerate_config.yaml "
             f"--num_processes={num_gpus} "
-            f"--multi_gpu "
             f"--main_process_port 50{random.randint(10, 99)} "
             f"{' '.join(base_args)}"
         )

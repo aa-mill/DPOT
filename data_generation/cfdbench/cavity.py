@@ -8,8 +8,8 @@ from torch import Tensor
 import numpy as np
 from tqdm import tqdm
 
-from data_generation.cfdbench.base import CfdDataset, CfdAutoDataset
-from data_generation.cfdbench.utils import load_json, normalize_bc, normalize_physics_props
+from .base import CfdDataset, CfdAutoDataset
+from .utils import load_json, normalize_bc, normalize_physics_props
 
 
 def load_case_data(case_dir: Path) -> Tuple[np.ndarray, Dict[str, float]]:
@@ -426,7 +426,7 @@ def get_cavity_auto_datasets(
 
 
 if __name__ == "__main__":
-    data_dir = Path("../../data/large/cfdbench/cavity")
+    data_dir = Path("../data/large/cfdbench/cavity")
     delta_time = 0.5
     # train_data, dev_data, test_data = get_cavity_datasets(
     #     data_dir,

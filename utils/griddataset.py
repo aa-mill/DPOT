@@ -93,10 +93,12 @@ class MixedTemporalDataset(Dataset):
         '''
         H, W, T, C = x.shape
         x = x.view(H, W, -1).permute(2, 0, 1) # Cmax, H, W
-        x = F.interpolate(x.unsqueeze(0), size=(self.res, self.res),mode='bilinear').squeeze(0).permute(1, 2, 0)
+        # x = F.interpolate(x.unsqueeze(0), size=(self.res, self.res),mode='bilinear').squeeze(0).permute(1, 2, 0)
+        x = x.permute(1, 2, 0)
         x = x.view(*x.shape[:2], T, C)
         x_new = torch.ones([*x.shape[:-1], self.n_channels])
         x_new[..., :x.shape[-1]] = x  # H, W, T, Cmax
+        # print(x_new.shape)
 
         return x_new
 

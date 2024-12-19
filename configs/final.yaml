@@ -24,28 +24,30 @@ grad_clip: 10000.0
 # data paths
 train_paths: [
   'ns2d_pda',
+  'cfdbench'
 ]
 test_paths: [
-  'ns2d_pda'
+  'ns2d_pda',
+  'cfdbench'
 ]
-ntrain_list: [6500]
+ntrain_list: [6500, 1000]
 
 # task settings
 model: DPOT
-num_gpus: 4
+num_gpus: 1
 opt: adam
 data_weights: [1]
 comment: 'Ti'
 tasks:
   normalize: [0]
-  res: [16]
+  res: [128]
   patch_size: [8]
   noise_scale: [0.0005]
   modes: [32]
-  width: [512]
-  mlp_ratio: [1]
-  n_blocks: [4]
-  n_layers: [4]
+  width: [1536]
+  mlp_ratio: [4]
+  n_blocks: [8]
+  n_layers: [24]
   lr: [0.001]
   epochs: [10]
   lr_method: [cycle]
@@ -54,4 +56,4 @@ tasks:
   T_bundle: [1]
   beta1: [0.9]
   beta2: [0.9]
-  batch_size: [128]
+  batch_size: [64]
